@@ -1,4 +1,4 @@
-"""General fast inference for CoTracker3 offline (exp 007, attempt/general): any video length / point count / image size,
+"""General fast inference for CoTracker3 offline: any video length / point count / image size,
 nothing compiled or tuned per size, plain PyTorch ops only (exportable).
 
     from cotracker.fast import FastCoTrackerPredictor
@@ -15,7 +15,7 @@ Changes vs upstream (fp32 everywhere; network math unchanged, precision / layout
   corr="sample": fp32 2D grid_sample + fp16 GEMM (first version). Corr MLP in fp16, 2401-wide input zero-padded to 2408
 - update transformer in fp16 with fused SDPA (upstream: explicit softmax(QK^T)V in fp32); coordinates, visibility and
   confidence accumulate in fp32
-- `gacc`: optional fp16-accumulation GEMMs, and (`hacc`, default = gacc) feature-CNN convs through fastbb.cudnn_conv
+- `gacc`: optional fp16-accumulation GEMMs, and (`hacc`, default = gacc) feature-CNN convs through the vendored cudnn_conv
   (off for the friendly variant)
 """
 import contextlib
@@ -81,8 +81,8 @@ class FastCoTrackerThreeOffline(nn.Module):
         self.m = m = model.eval()
         self.gacc = gacc
         m.fnet.half().to(memory_format=torch.channels_last)
-        if hacc:  # fp16-accumulating cuDNN convs in the feature CNN (fastbb.cudnn_conv: precompiled plans)
-            from fastbb.cudnn_conv import patch_convs
+        if hacc:  # fp16-accumulating cuDNN convs in the feature CNN (vendored cudnn_conv: precompiled plans)
+            from .fastbb_vendored.cudnn_conv import patch_convs
             patch_convs(m.fnet)
         for mod in m.fnet.modules():
             if isinstance(mod, nn.InstanceNorm2d):
