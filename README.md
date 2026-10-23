@@ -1,3 +1,19 @@
+> **You are on `cuda-kernels`.** Research fork of the upstream `co-tracker` repository (base `82e02e8`, 2026-10; `main` mirrors upstream). `cuda-kernels` = upstream plus custom CUDA kernels and fast paths (vendored fastbb attention/MLP kernels). Prebuilt binaries are tied to the torch/CUDA build they were made with; the vendored fastbb cudnn-frontend paths need `pip install nvidia-cudnn-frontend`.
+>
+> Licence, as upstream (CC BY-NC 4.0, see LICENSE.md)
+
+RTX 5060 Ti 16 GB, torch cu130, 2026-10-23. Median of N runs after warm-up, fixed seeds. Speed-up columns: vs upstream + flags / vs upstream. Peak memory = torch peak allocated / reserved.
+
+Flags in the 'upstream + flags' row (no source change): fp16 autocast, cudnn.benchmark, TF32.
+
+| version | 48 frames, grid 30 ms | 24 frames, grid 50 ms | speed-up at A (vs flags / vs upstream) | speed-up at B | peak MB at A (alloc / reserved) | startup / first call / new size | accuracy |
+|---|---|---|---|---|---|---|---|
+| upstream (fp32) | 1846.1 | 2220.4 | 1.00x | 1.00x | 5400 / 6632 | not measured | reference |
+| upstream + flags (fp16 autocast, cudnn.benchmark, TF32) | 1157.0 | 1409.8 | 1.00x / 1.60x | 1.00x / 1.57x | 7162 / 7516 | first call +2.7 s | median track deviation vs upstream 0.0071 / 0.0054 px |
+| **cuda-kernels** | 622.6 | 753.2 | 1.86x / 2.97x | 1.87x / 2.95x | 3051 / 3550 | not measured | median deviation 0.0185 / 0.0137 px (max 0.47 px) |
+
+---
+
 # CoTracker3: Simpler and Better Point Tracking by Pseudo-Labelling Real Videos
 
 **[Meta AI Research, GenAI](https://ai.facebook.com/research/)**; **[University of Oxford, VGG](https://www.robots.ox.ac.uk/~vgg/)**
